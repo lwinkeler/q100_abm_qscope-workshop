@@ -18,7 +18,7 @@ model q100
 import "../modules/json_udp.gaml"
 
 global {
-
+	float seed <- 1.0;
 	// bool show_heatingnetwork <- true;
 
 	float step <- 1 #day;
@@ -638,6 +638,7 @@ global {
 			do consume_energy;
 		}
 		do update_max_values;
+		write rnd(1.0);
 
 	}
 
