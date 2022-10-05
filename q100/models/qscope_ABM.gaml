@@ -18,7 +18,7 @@ model q100
 import "../modules/json_udp.gaml"
 
 global {
-	float seed <- 1.0;
+	// float seed <- 1.0;
 	// bool show_heatingnetwork <- true;
 
 	float step <- 1 #day;
@@ -366,7 +366,7 @@ global {
   	bool B_feedback <- get_initial_value_bool("B_feedback"); // Feedback of a decision on other perceived behavioral control values on-off
 
 	bool view_toggle <- get_initial_value_bool("view_toggle"); // Parameter to toggle the 3D-View.
-	bool keep_seed <- get_initial_value_bool("keep_seed"); // When true, the simulation seed will not change.
+	// bool keep_seed <- get_initial_value_bool("keep_seed"); // When true, the simulation seed will not change.
 	string timestamp <- "";
 
 	int refurbished_buildings_year; // sum of buildings refurbished this year
@@ -466,7 +466,7 @@ global {
   	feedback_factor <- get_initial_value_float("feedback_factor"); // influence factor of feedback after a decision is made or household moved into a building with q100-connection
   	B_feedback <- get_initial_value_bool("B_feedback"); // Feedback of a decision on other perceived behavioral control values on-off
 	view_toggle <- get_initial_value_bool("view_toggle"); // Parameter to toggle the 3D-View.
-	keep_seed <- get_initial_value_bool("keep_seed"); // When true, the simulation seed will not change.
+	// keep_seed <- get_initial_value_bool("keep_seed"); // When true, the simulation seed will not change.
 	share_families <- get_initial_value_float("share_families"); // share of families in whole neighborhood
 	share_socialgroup_families <- get_initial_value_float("share_socialgroup_families"); // share of families that are part of a social group
 	share_socialgroup_nonfamilies <- get_initial_value_float("share_socialgroup_nonfamilies"); // share of households that are not families but part of a social group
@@ -474,12 +474,14 @@ global {
 	influence_type <- get_initial_value_string("influence_type");
 	communication_memory <- get_initial_value_bool("communication_memory");
 
-	write rnd(1.0);
+	// write rnd(1.0);
 	write qscope_interchange_matrix;
+	// seed <- 1.0;
+	write "seed: " + seed;
 
 	if (timestamp = "") // only delete files in general output folder if using GUI
 	{
-		bool delete_csv_export_emissions <- delete_file("../data/outputs/output/buildings_power_suppliers.csv");
+		bool delete_csv_export_buildings_power_suppliers <- delete_file("../data/outputs/output/buildings_power_suppliers.csv");
     	bool delete_csv_export_emissions <- delete_file("../data/outputs/output/emissions/");
     	bool delete_csv_export_energy_prices <- delete_file("../data/outputs/output/energy_prices/");
     	bool delete_csv_export_connections <- delete_file("../data/outputs/output/connections/");
@@ -1951,6 +1953,7 @@ species edge_vis {
 
 experiment agent_decision_making type: gui{
 
+float seed <- 5.0;
 
  	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making";
  	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making";
@@ -1979,8 +1982,8 @@ experiment agent_decision_making type: gui{
   	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_Zero_emissions" among: ["Constant_50g_/_kWh", "Declining_Steps", "Declining_Linear", "Constant_Zero_emissions"] category: "Technical data";
   	parameter "Carbon price for households?" var: carbon_price_on_off <- false category: "Technical data";
 
-  	parameter "Seed" var: seed <- seed category: "Simulation";
-  	parameter "Keep seed" var: keep_seed category: "Simulation";
+  	 parameter "Seed" var: seed <- seed category: "Simulation";
+  	// parameter "Keep seed" var: keep_seed category: "Simulation";
   	parameter "timestamp" var: timestamp <- "";
   	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
 
@@ -2398,8 +2401,8 @@ experiment debug type:gui {
   	parameter "Q100 CapEx prices scenario" var: q100_price_capex_scenario <- "1 payment" among: ["1 payment", "2 payments", "5 payments"] category: "Technical data";
   	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_50g / kWh" among: ["Constant_50g / kWh", "Declining_Steps", "Declining_Linear", "Constant_ Zero emissions"] category: "Technical data";
   	parameter "Carbon price for households?" var: carbon_price_on_off <- false category: "Technical data";
-  	parameter "Seed" var: seed <- seed category: "Simulation";
-  	parameter "Keep seed" var: keep_seed <- false category: "Simulation";
+//  	parameter "Seed" var: seed <- seed category: "Simulation";
+  	// parameter "Keep seed" var: keep_seed <- false category: "Simulation";
   	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
 
 }
