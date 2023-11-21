@@ -91,7 +91,8 @@ global {
 	matrix<float> energy_prices_emissions <- matrix<float>(csv_file("../includes/csv-data_technical/energy_prices-emissions.csv", ",", float, true));
 	matrix<float> q100_concept_prices_emissions <- matrix<float>(csv_file("../includes/csv-data_technical/q100_prices_emissions-dummy.csv", ",", float, true));
 
-	string buildings_file <- (timestamp = "") ? "../data/outputs/output/buildings_clusters.csv" : "../data/outputs/output_" + timestamp + "/buildings_clusters_" + timestamp + ".csv";
+	string buildings_file <- (timestamp = "") ? "../data/outputs/output/buildings_clusters.csv" : "../data/outputs/output_" + timestamp + "/round" + round + "/buildings_clusters_" + timestamp + ".csv";
+	string output_folder <- (timestamp = "") ? "../data/outputs/output" : "../data/outputs/output_" + timestamp + "/round" + round;
 	matrix<string> qscope_interchange_matrix <- matrix<string>(csv_file(buildings_file, ",", string, true));
 
 
@@ -336,7 +337,7 @@ global {
 	}
 
 	action print_power_supplier{
-		string export_file <- (timestamp != "") ? "../data/outputs/output_" + timestamp + "/buildings_power_suppliers.csv" : "../data/outputs/output/buildings_power_suppliers.csv";
+		string export_file <- output_folder + "/buildings_power_suppliers.csv";
 		ask agents of_generic_species households {
 			save [house.id, power_supplier] to: export_file type: "csv" rewrite: false;
 		}
@@ -373,7 +374,10 @@ global {
 
 	bool view_toggle <- get_initial_value_bool("view_toggle"); // Parameter to toggle the 3D-View.
 	bool keep_seed <- get_initial_value_bool("keep_seed"); // When true, the simulation seed will not change.
-	string timestamp <- "";
+	
+	// API data from Q-Scope:
+	string timestamp <- ""; // timestamp of session start
+	string round <- ""; // game round
 
 	int refurbished_buildings_year; // sum of buildings refurbished this year
 	int unrefurbished_buildings_year; // sum of unrefurbished buildings at the beginning of the year
@@ -486,10 +490,10 @@ global {
 
 	if (timestamp = "") // only delete files in general output folder if using GUI
 	{
-		bool delete_csv_export_power_supplier <- delete_file("../data/outputs/output/buildings_power_suppliers.csv");
-    	bool delete_csv_export_emissions <- delete_file("../data/outputs/output/emissions/");
-    	bool delete_csv_export_energy_prices <- delete_file("../data/outputs/output/energy_prices/");
-    	bool delete_csv_export_connections <- delete_file("../data/outputs/output/connections/");
+		bool delete_csv_export_power_supplier <- delete_file(output_folder + "/buildings_power_suppliers.csv");
+    	bool delete_csv_export_emissions <- delete_file(output_folder + "/emissions/");
+    	bool delete_csv_export_energy_prices <- delete_file(output_folder + "/energy_prices/");
+    	bool delete_csv_export_connections <- delete_file(output_folder + "/connections/");
 	}
 		create technical_data_calculator number: 1;
 		create building from: shape_file_buildings with: [id::string(read("Kataster_C")), type::string(read(attributes_source)), units::int(read("Kataster_W")), street::string(read("Kataster_S")), mod_status::string(read("Kataster_8")), net_floor_area::int(read("Kataster_6")), spec_heat_consumption::float(read("Kataster13")), spec_power_consumption::float(read("Kataster15")), energy_source::string(read("Kataster_E"))] { // create agents according to shapefile metadata
@@ -2029,7 +2033,8 @@ experiment agent_decision_making type: gui{
 
   	parameter "Seed" var: seed <- seed category: "Simulation";
   	parameter "Keep seed" var: keep_seed category: "Simulation";
-  	parameter "timestamp" var: timestamp <- "";
+  	parameter "timestamp" var: timestamp <- ""; // will be overwritten by Q-Scope API
+  	parameter "round" var: round <- ""; // will be overwritten by Q-Scope API
   	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
 
   	font my_font <- font("Arial", 12, #bold);
@@ -2042,7 +2047,7 @@ experiment agent_decision_making type: gui{
 
 		float value <- length(building where ((each.energy_source = "q100") and (each.built))) / length(building where (each.built)) * 100;
     int value_absolute <- length(building where ((each.mod_status = "s") and (each.built)));
-		string export_file <- (timestamp != "") ? "../data/outputs/output_" + timestamp + "/connections/connections_export.csv" : "../data/outputs/output/connections/connections_export.csv";
+		string export_file <- output_folder + "/connections/connections_export.csv";
 		save [cycle, current_date, value, value_absolute]
 		to: export_file type: csv rewrite: false;
 	}
@@ -2051,7 +2056,7 @@ experiment agent_decision_making type: gui{
 
 	reflex save_energy_costs {
 		if (current_date.month = 1) and (current_date.day = 1) {
-				string export_file <- (timestamp = "") ? "../data/outputs/output/energy_prices/energy_prices_total.csv" : "../data/outputs/output_" + timestamp + "/energy_prices/energy_prices_total.csv";
+				string export_file <- output_folder + "/energy_prices/energy_prices_total.csv";
 
 			save [cycle, current_date, power_price, oil_price, gas_price, q100_price_opex] // TODO exportiert derzeit "nur" die Werte, welche an anderer Stelle importiert werden; koennte erweitert werden durch zB "monatliche Ausgaben eines Durchschnitts-Haushalts fuer Energie"
 			to: export_file type: csv rewrite: false  header: true;
@@ -2064,13 +2069,13 @@ experiment agent_decision_making type: gui{
 		if current_date.day = 3 {
 
 			ask building where (each.qscope_interchange_flag = true) {
-				export_file <- (timestamp = "") ? "../data/outputs/output/emissions/CO2_emissions_" + id + ".csv" : "../data/outputs/output_" + timestamp + "/emissions/CO2_emissions_" + id + ".csv";
+				export_file <- output_folder + "/emissions/CO2_emissions_" + id + ".csv";
 				save [cycle, current_date, id, building_household_emissions]
 				to: export_file type: csv rewrite: false header: true;
 			}
 
 			ask technical_data_calculator {
-				export_file <- (timestamp = "") ? "../data/outputs/output/emissions/CO2_emissions_neighborhood.csv" : "../data/outputs/output_" + timestamp + "/emissions/CO2_emissions_neighborhood.csv";
+				export_file <- output_folder + "/emissions/CO2_emissions_neighborhood.csv";
 
 				save [cycle, current_date, emissions_neighborhood_total, emissions_household_average, emissions_neighborhood_accu, emissions_household_average_accu, modernization_rate]
 
@@ -2084,7 +2089,7 @@ experiment agent_decision_making type: gui{
 		if current_date.day = 3 {
 
 			ask building where (each.qscope_interchange_flag = true) {
-				export_file <- (timestamp = "") ? "../data/outputs/output/energy_prices/energy_prices_" + id + ".csv" : "../data/outputs/output_" + timestamp + "/energy_prices/energy_prices_" + id + ".csv";
+				export_file <- output_folder + "/energy_prices/energy_prices_" + id + ".csv";
 				save [cycle, current_date, id, building_household_expenses_power, building_household_expenses_heat]
 				to: export_file type: csv rewrite: false header: true;
 			}
