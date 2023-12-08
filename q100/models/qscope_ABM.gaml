@@ -279,7 +279,7 @@ global {
 		string value <- initial_values[2, row];
 		write [descr, row, type, value];
 		if type = "string" {
-			return string(value);
+			return value;
 		}
 		else {
 			error "The type of the value should be string but is " + type;
@@ -339,7 +339,7 @@ global {
 	action print_power_supplier{
 		string export_file <- output_folder + "/buildings_power_suppliers.csv";
 		ask agents of_generic_species households {
-			save [house.id, power_supplier] to: export_file type: "csv" rewrite: false;
+			save [house.id, power_supplier] to: export_file format: csv rewrite: false;
 		}
 	}
 
@@ -1147,7 +1147,7 @@ species building {
 
 	}
 	aspect threedim {
-		float height <- (floor(self.units / 10) + 1) * 10;
+		float height <- float((floor(self.units / 10) + 1) * 10);
 
 		if self.type = "NWG" {
 			height <- 20.0;
@@ -2004,24 +2004,24 @@ species edge_vis {
 experiment agent_decision_making type: gui{
 
 
- 	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making";
- 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making";
- 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making";
+ 	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making" init: private_communication;
+ 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making" init: change_threshold;
+ 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making" init: landlord_prop;
  	parameter "Use delta in utility calculation" var: delta_on_off category: "Decision making";
  	parameter "Include PBC-Value in the current utility" var: B_do_nothing category: "Decision making";
- 	parameter "Share of MFH units that is needed to connect to Q100 heat_network" var: MFH_connection_threshold category: "Decision making";
- 	parameter "Influence of feedback of decision making on own personal values" var: feedback_factor category: "Decision making";
- 	parameter "Feedback of decision on perceived behavioral control" var: B_feedback category: "Decision making";
+ 	parameter "Share of MFH units that is needed to connect to Q100 heat_network" var: MFH_connection_threshold category: "Decision making" init: MFH_connection_threshold;
+ 	parameter "Influence of feedback of decision making on own personal values" var: feedback_factor category: "Decision making" init: feedback_factor;
+ 	parameter "Feedback of decision on perceived behavioral control" var: B_feedback category: "Decision making" init: B_feedback;
 
- 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication";
-	parameter "Influence-Type" var: influence_type among: ["one-side", "both_sides"] category: "Communication";
-	parameter "Memory" var: communication_memory category: "Communication";
+ 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication" init: global_neighboring_distance;
+	parameter "Influence-Type" var: influence_type among: ["one-side", "both_sides"] category: "Communication" init: influence_type;
+	parameter "Memory" var: communication_memory category: "Communication" init: communication_memory;
 	parameter "New Buildings" var: new_buildings_parameter <- "none" among: ["at_once", "continuously", "linear2030", "none"] category: "Buildings";
-	parameter "Random Order of new Buildings" var: new_buildings_order_random category: "Buildings";
- 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05;
+	parameter "Random Order of new Buildings" var: new_buildings_order_random category: "Buildings" init: new_buildings_order_random;
+ 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05 init: energy_saving_rate;
  	parameter "Shapefile for buildings:" var: shape_file_buildings category: "GIS";
  	parameter "Building types source" var: attributes_source <- "Kataster_A" among: ["Kataster_A", "Kataster_T"] category: "GIS";
- 	parameter "3D-View" var: view_toggle category: "GIS";
+ 	parameter "3D-View" var: view_toggle category: "GIS" init: view_toggle;
   	parameter "Alpha scenario" var: alpha_scenario <- "Static_mean" among: ["Static_mean", "Dynamic_moderate", "Dynamic_high", "Static_high"] category: "Technical data";
  	parameter "Carbon price scenario" var: carbon_price_scenario <- "B - Moderate" among: ["A - Conservative", "B - Moderate", "C1 - Progressive", "C2 - Progressive", "C3 - Progressive"] category: "Technical data";
  	parameter "Energy prices scenario" var: energy_price_scenario <- "Prices_2021" among: ["Prices_Project start", "Prices_2021", "Prices_2022 1st half"] category: "Technical data";
@@ -2032,10 +2032,10 @@ experiment agent_decision_making type: gui{
   	parameter "Carbon price for households?" var: carbon_price_on_off <- false category: "Technical data";
 
   	parameter "Seed" var: seed <- seed category: "Simulation";
-  	parameter "Keep seed" var: keep_seed category: "Simulation";
+  	parameter "Keep seed" var: keep_seed category: "Simulation" init: keep_seed;
   	parameter "timestamp" var: timestamp <- ""; // will be overwritten by Q-Scope API
   	parameter "round" var: round <- ""; // will be overwritten by Q-Scope API
-  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
+  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation" init: model_runtime_string;
 
   	font my_font <- font("Arial", 12, #bold);
 
@@ -2049,7 +2049,7 @@ experiment agent_decision_making type: gui{
     int value_absolute <- length(building where ((each.mod_status = "s") and (each.built)));
 		string export_file <- output_folder + "/connections/connections_export.csv";
 		save [cycle, current_date, value, value_absolute]
-		to: export_file type: csv rewrite: false;
+		to: export_file format: csv rewrite: false;
 	}
 
 // export energy costs:
@@ -2059,7 +2059,7 @@ experiment agent_decision_making type: gui{
 				string export_file <- output_folder + "/energy_prices/energy_prices_total.csv";
 
 			save [cycle, current_date, power_price, oil_price, gas_price, q100_price_opex] // TODO exportiert derzeit "nur" die Werte, welche an anderer Stelle importiert werden; koennte erweitert werden durch zB "monatliche Ausgaben eines Durchschnitts-Haushalts fuer Energie"
-			to: export_file type: csv rewrite: false  header: true;
+			to: export_file format: csv rewrite: false  header: true;
 		}
 	}
 //csv_export for output test - line graph infoscreen /////////////////////////////// TODO Thema Datenschutz -> eigentlich nur durchschnittswerte exportieren; flag-export wofuer noetig?
@@ -2071,7 +2071,7 @@ experiment agent_decision_making type: gui{
 			ask building where (each.qscope_interchange_flag = true) {
 				export_file <- output_folder + "/emissions/CO2_emissions_" + id + ".csv";
 				save [cycle, current_date, id, building_household_emissions]
-				to: export_file type: csv rewrite: false header: true;
+				to: export_file format: csv rewrite: false header: true;
 			}
 
 			ask technical_data_calculator {
@@ -2079,7 +2079,7 @@ experiment agent_decision_making type: gui{
 
 				save [cycle, current_date, emissions_neighborhood_total, emissions_household_average, emissions_neighborhood_accu, emissions_household_average_accu, modernization_rate]
 
-				to: export_file type: csv rewrite: false header: true; // löschung der datei implementieren
+				to: export_file format: csv rewrite: false header: true; // löschung der datei implementieren
 			}
 		}
 	}
@@ -2091,7 +2091,7 @@ experiment agent_decision_making type: gui{
 			ask building where (each.qscope_interchange_flag = true) {
 				export_file <- output_folder + "/energy_prices/energy_prices_" + id + ".csv";
 				save [cycle, current_date, id, building_household_expenses_power, building_household_expenses_heat]
-				to: export_file type: csv rewrite: false header: true;
+				to: export_file format: csv rewrite: false header: true;
 			}
 		}
 	}
@@ -2185,7 +2185,7 @@ experiment agent_decision_making type: gui{
 			}
 		}
 
-		display "Charts" {
+		display "Charts" type: java2D{
 			chart "Average of decision-variables" type: series {
 				data "CEEA" value: sum_of(agents of_generic_species households, each.A_e) / length(agents of_generic_species households);
 				data "EDA" value: sum_of(agents of_generic_species households, each.A_d) / length(agents of_generic_species households);
@@ -2194,7 +2194,7 @@ experiment agent_decision_making type: gui{
 			}
 		}
 
-		display "Modernization" {
+		display "Modernization" type: java2D{
 			chart "Rate of Modernization"
 			type: series
 			//y_range: {0,0.03}
@@ -2226,7 +2226,7 @@ experiment agent_decision_making type: gui{
 		}
 
 
-		display "Monthly Emissions"{ // TODO
+		display "Monthly Emissions" type: java2D{ // TODO
 			chart "Emissions per month within the neighborhood"
 			type: series
 			x_label: "Month"
@@ -2246,7 +2246,7 @@ experiment agent_decision_making type: gui{
 			}
 		}
 
-		display "Emissions cumulative" { // TODO
+		display "Emissions cumulative" type: java2D{ // TODO
 			chart "Cumulative emissions of the neighborhood"
 			type: series
 			x_label: "Month"
@@ -2258,7 +2258,7 @@ experiment agent_decision_making type: gui{
 				;
 			}
 		}
-		display "Average Emissions Cumulative" { // TODO
+		display "Average Emissions Cumulative" type: java2D{ // TODO
 			chart "Average cumulative emissions of the neighborhood"
 			type: series
 			x_label: "Month"
@@ -2272,7 +2272,7 @@ experiment agent_decision_making type: gui{
 			}
 		}
 
-		display "Average Emissions"{
+		display "Average Emissions" type: java2D{
 			chart "Average Emissions per Household"
 			type: series
 			x_serie: [technical_data_calculator[0].month_counter]
@@ -2294,34 +2294,38 @@ experiment agent_decision_making type: gui{
 experiment agent_decision_making_3d type: gui{
 
 
- 	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making";
- 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making";
- 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making";
+ 	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making" init: private_communication;
+ 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making" init: change_threshold;
+ 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making" init: landlord_prop;
  	parameter "Use delta in utility calculation" var: delta_on_off category: "Decision making";
  	parameter "Include PBC-Value in the current utility" var: B_do_nothing category: "Decision making";
- 	parameter "Share of MFH units that is needed to connect to Q100 heat_network" var: MFH_connection_threshold category: "Decision making";
- 	parameter "Influence of feedback of decision making on own personal values" var: feedback_factor category: "Decision making";
- 	parameter "Feedback of decision on perceived behavioral control" var: B_feedback category: "Decision making";
+ 	parameter "Share of MFH units that is needed to connect to Q100 heat_network" var: MFH_connection_threshold category: "Decision making" init: MFH_connection_threshold;
+ 	parameter "Influence of feedback of decision making on own personal values" var: feedback_factor category: "Decision making" init: feedback_factor;
+ 	parameter "Feedback of decision on perceived behavioral control" var: B_feedback category: "Decision making" init: B_feedback;
 
- 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication";
-	parameter "Influence-Type" var: influence_type <- "one-side" among: ["one-side", "both_sides"] category: "Communication";
-	parameter "Memory" var: communication_memory <- true among: [true, false] category: "Communication";
+ 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication" init: global_neighboring_distance;
+	parameter "Influence-Type" var: influence_type among: ["one-side", "both_sides"] category: "Communication" init: influence_type;
+	parameter "Memory" var: communication_memory category: "Communication" init: communication_memory;
 	parameter "New Buildings" var: new_buildings_parameter <- "none" among: ["at_once", "continuously", "linear2030", "none"] category: "Buildings";
-	parameter "Random Order of new Buildings" var: new_buildings_order_random <- true category: "Buildings";
- 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05;
+	parameter "Random Order of new Buildings" var: new_buildings_order_random category: "Buildings" init: new_buildings_order_random;
+ 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05 init: energy_saving_rate;
  	parameter "Shapefile for buildings:" var: shape_file_buildings category: "GIS";
  	parameter "Building types source" var: attributes_source <- "Kataster_A" among: ["Kataster_A", "Kataster_T"] category: "GIS";
- 	parameter "3D-View" var: view_toggle category: "GIS";
+ 	parameter "3D-View" var: view_toggle category: "GIS" init: view_toggle;
   	parameter "Alpha scenario" var: alpha_scenario <- "Static_mean" among: ["Static_mean", "Dynamic_moderate", "Dynamic_high", "Static_high"] category: "Technical data";
- 	parameter "Carbon price scenario" var: carbon_price_scenario <- "A - Conservative" among: ["A - Conservative", "B - Moderate", "C1 - Progressive", "C2 - Progressive", "C3 - Progressive"] category: "Technical data";
- 	parameter "Energy prices scenario" var: energy_price_scenario <- "Prices_Project start" among: ["Prices_Project start", "Prices_2021", "Prices_2022 1st half"] category: "Technical data";
+ 	parameter "Carbon price scenario" var: carbon_price_scenario <- "B - Moderate" among: ["A - Conservative", "B - Moderate", "C1 - Progressive", "C2 - Progressive", "C3 - Progressive"] category: "Technical data";
+ 	parameter "Energy prices scenario" var: energy_price_scenario <- "Prices_2021" among: ["Prices_Project start", "Prices_2021", "Prices_2022 1st half"] category: "Technical data";
  	parameter "Q100 OpEx prices scenario" var: q100_price_opex_scenario <- "12 ct / kWh (static)" among: ["12 ct / kWh (static)", "9-15 ct / kWh (dynamic)"] category: "Technical data";
   	parameter "Q100 CapEx prices scenario" var: q100_price_capex_scenario <- "1 payment" among: ["1 payment", "2 payments", "5 payments"] category: "Technical data";
-  	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_50g / kWh" among: ["Constant_50g / kWh", "Declining_Steps", "Declining_Linear", "Constant_ Zero emissions"] category: "Technical data";
 
+  	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_Zero_emissions" among: ["Constant_50g_/_kWh", "Declining_Steps", "Declining_Linear", "Constant_Zero_emissions"] category: "Technical data";
   	parameter "Carbon price for households?" var: carbon_price_on_off <- false category: "Technical data";
 
-  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
+  	parameter "Seed" var: seed <- seed category: "Simulation";
+  	parameter "Keep seed" var: keep_seed category: "Simulation" init: keep_seed;
+  	parameter "timestamp" var: timestamp <- ""; // will be overwritten by Q-Scope API
+  	parameter "round" var: round <- ""; // will be overwritten by Q-Scope API
+  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation" init: model_runtime_string;
 
 
 
@@ -2396,7 +2400,7 @@ experiment agent_decision_making_3d type: gui{
 			}
 		}
 
-		display "Charts" {
+		display "Charts" type: java2D{
 			chart "Average of decision-variables" type: series {
 				data "CEEA" value: sum_of(agents of_generic_species households, each.A_e) / length(agents of_generic_species households);
 				data "EDA" value: sum_of(agents of_generic_species households, each.A_d) / length(agents of_generic_species households);
@@ -2404,7 +2408,7 @@ experiment agent_decision_making_3d type: gui{
 			}
 		}
 
-		display "Modernization" {
+		display "Modernization" type: java2D{
 			chart "Rate of Modernization" type: xy y_range: {0,0.03} style: line{
 				data "Rate of Modernization" value: {current_date.year, modernization_rate};
 				data "1% Refurbishment Rate" value: {current_date.year, 0.01};
@@ -2413,7 +2417,7 @@ experiment agent_decision_making_3d type: gui{
 			}
 		}
 
-		display "Monthly Emissions" refresh: (current_date.day = 1){ // TODO
+		display "Monthly Emissions" refresh: (current_date.day = 1) type: java2D{ // TODO
 			chart "Emissions per month within the neighborhood" type: series {
 				data "Total energy emissions of neighborhood per year" value: technical_data_calculator[0].emissions_neighborhood_total;
 				data "Total heat emissions of neighborhood per year" value: technical_data_calculator[0].emissions_neighborhood_heat;
@@ -2422,7 +2426,7 @@ experiment agent_decision_making_3d type: gui{
 			}
 		}
 
-		display "Emissions cumulative" { // TODO
+		display "Emissions cumulative" type: java2D{ // TODO
 			chart "Cumulative emissions of the neighborhood" type: series {
 
 				data "Accumulated energy emissions of neighborhood per year" value: technical_data_calculator[0].emissions_neighborhood_accu;
@@ -2434,27 +2438,37 @@ experiment agent_decision_making_3d type: gui{
 }
 
 experiment debug type:gui {
-	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making";
- 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making";
- 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making";
- 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication";
-	parameter "Influence-Type" var: influence_type <- "one-side" among: ["one-side", "both_sides"] category: "Communication";
-	parameter "Memory" var: communication_memory <- true among: [true, false] category: "Communication";
+	parameter "Influence of private communication" var: private_communication min: 0.0 max: 1.0 category: "Decision making" init: private_communication;
+ 	parameter "Energy Efficient Habits Threshold for Change Decision" var: change_threshold category: "Decision making" init: change_threshold;
+ 	parameter "Chance to convince landlord for connection of Q100 heat network" var: landlord_prop category: "Decision making" init: landlord_prop;
+ 	parameter "Use delta in utility calculation" var: delta_on_off category: "Decision making";
+ 	parameter "Include PBC-Value in the current utility" var: B_do_nothing category: "Decision making";
+ 	parameter "Share of MFH units that is needed to connect to Q100 heat_network" var: MFH_connection_threshold category: "Decision making" init: MFH_connection_threshold;
+ 	parameter "Influence of feedback of decision making on own personal values" var: feedback_factor category: "Decision making" init: feedback_factor;
+ 	parameter "Feedback of decision on perceived behavioral control" var: B_feedback category: "Decision making" init: B_feedback;
+
+ 	parameter "Neighboring distance" var: global_neighboring_distance min: 0 max: 5 category: "Communication" init: global_neighboring_distance;
+	parameter "Influence-Type" var: influence_type among: ["one-side", "both_sides"] category: "Communication" init: influence_type;
+	parameter "Memory" var: communication_memory category: "Communication" init: communication_memory;
 	parameter "New Buildings" var: new_buildings_parameter <- "none" among: ["at_once", "continuously", "linear2030", "none"] category: "Buildings";
-	parameter "Random Order of new Buildings" var: new_buildings_order_random <- true category: "Buildings";
- 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05;
+	parameter "Random Order of new Buildings" var: new_buildings_order_random category: "Buildings" init: new_buildings_order_random;
+ 	parameter "Modernization Energy Saving" var: energy_saving_rate category: "Buildings" min: 0.0 max: 1.0 step: 0.05 init: energy_saving_rate;
  	parameter "Shapefile for buildings:" var: shape_file_buildings category: "GIS";
  	parameter "Building types source" var: attributes_source <- "Kataster_A" among: ["Kataster_A", "Kataster_T"] category: "GIS";
- 	parameter "3D-View" var: view_toggle category: "GIS";
+ 	parameter "3D-View" var: view_toggle category: "GIS" init: view_toggle;
   	parameter "Alpha scenario" var: alpha_scenario <- "Static_mean" among: ["Static_mean", "Dynamic_moderate", "Dynamic_high", "Static_high"] category: "Technical data";
- 	parameter "Carbon price scenario" var: carbon_price_scenario <- "A - Conservative" among: ["A - Conservative", "B - Moderate", "C1 - Progressive", "C2 - Progressive", "C3 - Progressive"] category: "Technical data";
- 	parameter "Energy prices scenario" var: energy_price_scenario <- "Prices_Project start" among: ["Prices_Project start", "Prices_2021", "Prices_2022 1st half"] category: "Technical data";
+ 	parameter "Carbon price scenario" var: carbon_price_scenario <- "B - Moderate" among: ["A - Conservative", "B - Moderate", "C1 - Progressive", "C2 - Progressive", "C3 - Progressive"] category: "Technical data";
+ 	parameter "Energy prices scenario" var: energy_price_scenario <- "Prices_2021" among: ["Prices_Project start", "Prices_2021", "Prices_2022 1st half"] category: "Technical data";
  	parameter "Q100 OpEx prices scenario" var: q100_price_opex_scenario <- "12 ct / kWh (static)" among: ["12 ct / kWh (static)", "9-15 ct / kWh (dynamic)"] category: "Technical data";
   	parameter "Q100 CapEx prices scenario" var: q100_price_capex_scenario <- "1 payment" among: ["1 payment", "2 payments", "5 payments"] category: "Technical data";
-  	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_50g / kWh" among: ["Constant_50g / kWh", "Declining_Steps", "Declining_Linear", "Constant_ Zero emissions"] category: "Technical data";
+
+  	parameter "Q100 Emissions scenario" var: q100_emissions_scenario <- "Constant_Zero_emissions" among: ["Constant_50g_/_kWh", "Declining_Steps", "Declining_Linear", "Constant_Zero_emissions"] category: "Technical data";
   	parameter "Carbon price for households?" var: carbon_price_on_off <- false category: "Technical data";
+
   	parameter "Seed" var: seed <- seed category: "Simulation";
-  	parameter "Keep seed" var: keep_seed <- false category: "Simulation";
-  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation";
+  	parameter "Keep seed" var: keep_seed category: "Simulation" init: keep_seed;
+  	parameter "timestamp" var: timestamp <- ""; // will be overwritten by Q-Scope API
+  	parameter "round" var: round <- ""; // will be overwritten by Q-Scope API
+  	parameter "Model runtime" var: model_runtime_string among: ["2020-2030", "2020-2040", "2020-2045"] category: "Simulation" init: model_runtime_string;
 
 }
